@@ -11,20 +11,30 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
+# カテゴリのアイコン定義
+CATEGORY_ICONS = {
+    "総合・主要": "📌",
+    "社会・国内": "🏛️",
+    "国際": "🌍",
+    "経済": "📈",
+    "科学・IT": "🔬",
+    "Esports": "🎮",
+    "天気": "☀️",
+    "猫": "🐱",
+}
+
 # カスタムCSS（見やすいカードUIとバッジ、レスポンシブ対応）
 st.markdown(
     """
     <style>
-    /* 全体フォント・レイアウト微調整 */
     .main-header {
-        margin-bottom: 0.5rem;
+        margin-bottom: 0.3rem;
     }
     .sub-text {
         color: #666;
         font-size: 0.9rem;
-        margin-bottom: 1.5rem;
+        margin-bottom: 1.2rem;
     }
-    /* ニュースカード */
     .news-card {
         background-color: var(--secondary-background-color);
         border: 1px solid rgba(128, 128, 128, 0.2);
@@ -47,7 +57,7 @@ st.markdown(
     }
     .media-badge {
         color: #ffffff;
-        padding: 0.15rem 0.55rem;
+        padding: 0.18rem 0.55rem;
         border-radius: 4px;
         font-weight: 600;
         font-size: 0.75rem;
@@ -94,14 +104,6 @@ st.markdown(
     .link-btn:hover {
         text-decoration: underline;
     }
-    .status-box {
-        background-color: rgba(26, 115, 232, 0.08);
-        border-left: 4px solid #1a73e8;
-        padding: 0.8rem 1rem;
-        border-radius: 4px;
-        margin-bottom: 1.2rem;
-        font-size: 0.9rem;
-    }
     </style>
     """,
     unsafe_allow_html=True,
@@ -129,13 +131,9 @@ with st.sidebar:
     st.divider()
 
     st.markdown("### 🔍 検索・絞り込み")
-    search_keyword = st.text_input("キーワード検索", placeholder="例: 円相場、選挙、AI...")
+    search_keyword = st.text_input("キーワード検索", placeholder="例: 大会、台風、子猫、AI...")
 
-    # メディア絞り込み
-    all_medias = ["すべて", "NHKニュース", "Yahoo!ニュース", "BBCニュース"]
-    selected_media = st.selectbox("メディア選択", all_medias, index=0)
-
-    # 1ページあたりの件数
+    # 表示件数
     page_limit = st.slider("表示件数", min_value=10, max_value=100, value=30, step=10)
 
     st.divider()
@@ -143,9 +141,9 @@ with st.sidebar:
     st.markdown(
         """
         ### ⚖️ 本サイトのポリシー
-        - **完全ノー・パーソナライズ**: 閲覧履歴、クッキー、個人の嗜好によるフィルタリングは一切行いません。
-        - **客観的ニュース集約**: 公共放送（NHK）、主要ポータル（Yahoo!トピックス）、国際報道（BBC）のトップフィードをそのまま取得しています。
-        - **エコーチェンバーの防止**: アルゴリズムによって偏った情報ではなく、「いま社会で何が起きているか」をフラットに把握できます。
+        - **完全ノー・パーソナライズ**: 閲覧履歴、クッキー、個人の嗜好による推薦アルゴリズムは一切排除。
+        - **客観的・中立的集約**: 公共放送・主要報道機関・専門ポータルのフィードから直接取得。
+        - **エコーチェンバー防止**: 関心領域に偏らず、いま起きている事実や関心トピックをフラットに確認できます。
         """
     )
 
@@ -159,42 +157,32 @@ st.markdown(
 
 # カテゴリタブの作成
 categories = list(RSS_SOURCES.keys())
-tabs = st.tabs([f"📌 {cat}" for cat in categories])
+tab_labels = [f"{CATEGORY_ICONS.get(cat, '📌')} {cat}" for cat in categories]
+tabs = st.tabs(tab_labels)
 
 for tab, category in zip(tabs, categories):
     with tab:
         with st.spinner(f"「{category}」の最新ニュースを取得中..."):
             articles = get_cached_news(category)
 
-        # フィルタリング適用
         filtered = articles
-
-        # メディアフィルタ
-        if selected_media != "すべて":
-            filtered = [a for a in filtered if a["media"] == selected_media]
 
         # キーワードフィルタ
         if search_keyword.strip():
             kw = search_keyword.strip().lower()
             filtered = [
                 a for a in filtered
-                if kw in a["title"].lower() or kw in a["summary"].lower()
+                if kw in a["title"].lower() or kw in a["summary"].lower() or kw in a["media"].lower()
             ]
 
-        # 件数とステータス表示
-        col_count, col_info = st.columns([1, 2])
-        with col_count:
-            st.caption(f"該当記事: **{len(filtered)}** 件 （全 {len(articles)} 件中）")
-        with col_info:
-            if search_keyword:
-                st.caption(f"キーワード: 『{search_keyword}』で絞り込み中")
+        # 該当件数表示
+        st.caption(f"該当記事: **{len(filtered)}** 件 （全 {len(articles)} 件中）")
 
         if not filtered:
-            st.info("条件に一致するニュースが見つかりませんでした。別のキーワードやメディアをお試しください。")
+            st.info("条件に一致するニュースが見つかりませんでした。別のキーワードをお試しください。")
         else:
             # 記事一覧表示 (カードレンダリング)
             for item in filtered[:page_limit]:
-                # HTMLエスケープしてXSSを防止
                 title_escaped = html.escape(item["title"])
                 summary_escaped = html.escape(item["summary"]) if item["summary"] else ""
                 link_escaped = html.escape(item["link"])

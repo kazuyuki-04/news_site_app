@@ -97,6 +97,45 @@ RSS_SOURCES: Dict[str, List[Dict[str, str]]] = {
             "badge_color": "#FF0033",
         },
     ],
+    "Esports": [
+        {
+            "media": "4Gamer.net",
+            "category": "ゲーム・eスポーツ",
+            "url": "https://www.4gamer.net/rss/index.xml",
+            "badge_color": "#E65100",
+        },
+        {
+            "media": "eスポーツ総合",
+            "category": "eスポーツ",
+            "url": "https://news.google.com/rss/search?q=e%E3%82%B9%E3%83%9D%E3%83%BC%E3%83%84&hl=ja&gl=JP&ceid=JP:ja",
+            "badge_color": "#2E7D32",
+            "is_google_news": True,
+        },
+    ],
+    "天気": [
+        {
+            "media": "気象・天気情報",
+            "category": "天気・防災",
+            "url": "https://news.google.com/rss/search?q=%E5%A4%A9%E6%B0%97+OR+%E6%B0%97%E8%B1%A1&hl=ja&gl=JP&ceid=JP:ja",
+            "badge_color": "#0288D1",
+            "is_google_news": True,
+        },
+    ],
+    "猫": [
+        {
+            "media": "猫ジャーナル",
+            "category": "猫トピックス",
+            "url": "https://nekojournal.net/?feed=rss2",
+            "badge_color": "#D81B60",
+        },
+        {
+            "media": "猫ニュース総合",
+            "category": "猫ニュース",
+            "url": "https://news.google.com/rss/search?q=%E7%8C%AB&hl=ja&gl=JP&ceid=JP:ja",
+            "badge_color": "#FB8C00",
+            "is_google_news": True,
+        },
+    ],
 }
 
 
@@ -106,7 +145,6 @@ def clean_html(raw_html: str) -> str:
         return ""
     soup = BeautifulSoup(raw_html, "html.parser")
     text = soup.get_text(separator=" ", strip=True)
-    # 不要な改行や連続スペースを正規化
     return " ".join(text.split())
 
 
@@ -126,10 +164,8 @@ def parse_published_date(entry: Any) -> Optional[datetime]:
     try:
         dt = date_parser.parse(raw_date)
         if dt.tzinfo is None:
-            # タイムゾーン情報がない場合はJSTとみなす
             dt = dt.replace(tzinfo=JST)
         else:
-            # JSTに変換
             dt = dt.astimezone(JST)
         return dt
     except Exception:
@@ -146,7 +182,6 @@ def format_relative_time(dt: Optional[datetime]) -> str:
 
     seconds = int(diff.total_seconds())
     if seconds < 0:
-        # 未来の日時が設定されている等の場合
         return dt.strftime("%Y/%m/%d %H:%M")
     elif seconds < 60:
         return f"{seconds}秒前"
@@ -176,12 +211,30 @@ def fetch_category_news(category: str) -> List[Dict[str, Any]]:
                 agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
             )
 
+            is_google = source.get("is_google_news", False)
+
             for entry in feed.entries:
                 title = clean_html(getattr(entry, "title", "")).strip()
-                if not title or title in seen_titles:
+                if not title:
                     continue
 
+                media_name = source["media"]
+                # Google Newsの場合は元メディア名を抽出
+                if is_google:
+                    src = getattr(entry, "source", None)
+                    if src and isinstance(src, dict) and src.get("title"):
+                        media_name = src.get("title")
+                    elif src and hasattr(src, "title") and src.title:
+                        media_name = src.title
+                    
+                    # 末尾の " - メディア名" をタイトルからカット
+                    if media_name and title.endswith(f" - {media_name}"):
+                        title = title[:-len(f" - {media_name}")].strip()
+
+                if title in seen_titles:
+                    continue
                 seen_titles.add(title)
+
                 link = getattr(entry, "link", "")
                 
                 # 概要取得 (summary, description, contentなど)
@@ -200,7 +253,7 @@ def fetch_category_news(category: str) -> List[Dict[str, Any]]:
                     "title": title,
                     "summary": summary,
                     "link": link,
-                    "media": source["media"],
+                    "media": media_name,
                     "media_category": source["category"],
                     "badge_color": source["badge_color"],
                     "published_dt": dt,
