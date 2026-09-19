@@ -42,5 +42,25 @@ C:\Users\kazu0\.default_env\Scripts\streamlit.exe run app.py
 ## 📁 ファイル構成
 - `app.py`: Streamlitアプリケーション本体（UI設計、カード表示、フィルタ処理）
 - `news_fetcher.py`: RSSフィードの取得・解析・HTMLクレンジング・日時正規化ロジック
-- `requirements.txt`: 依存Pythonライブラリ一覧
+- `requirements.txt`: 依存Pythonライブラリ一覧（Streamlit Cloudで自動読み込み）
+- `.gitignore`: Git管理除外設定
 - `README.md`: 本説明書
+
+---
+
+## ☁️ Streamlit Community Cloud へのデプロイ手順
+
+1. **GitHubに新しいリポジトリを作成**（例: `neutral-news-dashboard`）
+2. **ローカルリポジトリをGitHubにプッシュ**:
+   ```bash
+   git remote add origin https://github.com/<あなたのユーザー名>/<リポジトリ名>.git
+   git push -u origin main
+   ```
+3. **Streamlit Community Cloudにログイン**:
+   - [share.streamlit.io](https://share.streamlit.io/) にアクセスし、GitHubアカウントでログイン
+4. **新規アプリの作成 (New app)**:
+   - **Repository**: 作成したリポジトリを選択
+   - **Branch**: `main`
+   - **Main file path**: `app.py`
+   - **Deploy!** ボタンをクリック
+
