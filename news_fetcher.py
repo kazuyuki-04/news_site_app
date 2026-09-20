@@ -83,6 +83,15 @@ RSS_SOURCES: Dict[str, List[Dict[str, str]]] = {
             "badge_color": "#FF0033",
         },
     ],
+    "株": [
+        {
+            "media": "株式・市場ニュース",
+            "category": "株価・市況",
+            "url": "https://news.google.com/rss/search?q=%E6%A0%AA%E4%BE%A1+OR+%E6%97%A5%E7%B5%8C%E5%B9%B3%E5%9D%87+OR+%E6%A0%AA%E5%BC%8F%E5%B8%82%E5%A0%B4+OR+%E6%97%A5%E6%9C%AC%E6%A0%AA+OR+%E7%B1%B3%E5%9B%BD%E6%A0%AA&hl=ja&gl=JP&ceid=JP:ja",
+            "badge_color": "#00897B",
+            "is_google_news": True,
+        },
+    ],
     "科学・IT": [
         {
             "media": "NHKニュース",

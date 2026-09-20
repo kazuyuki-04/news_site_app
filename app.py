@@ -17,6 +17,7 @@ CATEGORY_ICONS = {
     "社会・国内": "🏛️",
     "国際": "🌍",
     "経済": "📈",
+    "株": "📊",
     "科学・IT": "🔬",
     "Esports": "🎮",
     "天気": "☀️",
@@ -164,7 +165,7 @@ with st.sidebar:
     st.divider()
 
     st.markdown("### 🔍 検索・絞り込み")
-    search_keyword = st.text_input("キーワード検索", placeholder="例: 大会、台風、子猫、AI...")
+    search_keyword = st.text_input("キーワード検索", placeholder="例: 日経平均、大会、台風、子猫、AI...")
 
     # 表示件数
     page_limit = st.slider("表示件数", min_value=10, max_value=100, value=30, step=10)
